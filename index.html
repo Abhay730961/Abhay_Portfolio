@@ -345,20 +345,24 @@
                     </div>
                 </div>
                 <div class="contact-form">
-                    <form id="contactForm">
+                    <form id="contactForm" onsubmit="sendEmail(event)">
+                        <div id="notification" class="notification"></div>
                         <div class="form-group">
-                            <input type="text" id="name" placeholder="Your Name" required>
+                            <input type="text" name="from_name" id="name" placeholder="Your Name" required>
                         </div>
                         <div class="form-group">
-                            <input type="email" id="email" placeholder="Your Email" required>
+                            <input type="email" name="reply_to" id="email" placeholder="Your Email" required>
                         </div>
                         <div class="form-group">
-                            <input type="text" id="subject" placeholder="Subject" required>
+                            <input type="text" name="subject" id="subject" placeholder="Subject" required>
                         </div>
                         <div class="form-group">
-                            <textarea id="message" rows="5" placeholder="Your Message" required></textarea>
+                            <textarea name="message" id="message" rows="5" placeholder="Your Message" required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span class="btn-text">Send Message</span>
+                            <div class="btn-loader"></div>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -368,9 +372,9 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Abhay Kumar Rajbhar. All rights reserved.</p>
+            <p>&copy; 2024 Abhay Kumar Rajbhar. All rights reserved.</p>
             <div class="social-links">
-                <a href="https://www.linkedin.com/in/abhay-kumar-72a448193/" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
                 <a href="mailto:Ak5934231@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
                 <a href="tel:+917309619061" aria-label="Phone"><i class="fas fa-phone"></i></a>
@@ -378,6 +382,98 @@
         </div>
     </footer>
 
+    <!-- EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // Initialize EmailJS with your public key
+        (function() {
+            emailjs.init("nwK3Fa-WW6hIoJBzN"); // You'll get this from EmailJS
+        })();
+
+        function sendEmail(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const btnText = btn.querySelector('.btn-text');
+            const loader = btn.querySelector('.btn-loader');
+            const notification = document.getElementById('notification');
+            
+            // Show loading state
+            btn.disabled = true;
+            btnText.textContent = 'Sending...';
+            loader.style.display = 'inline-block';
+            
+            // Log form data for debugging
+            const formData = new FormData(e.target);
+            console.log('Form data being sent:', Object.fromEntries(formData.entries()));
+            
+            // Test with hardcoded values first
+            const templateParams = {
+                from_name: formData.get('from_name') || 'Test User',
+                reply_to: formData.get('reply_to') || 'test@example.com',
+                subject: formData.get('subject') || 'Test Subject',
+                message: formData.get('message') || 'This is a test message'
+            };
+            
+            console.log('Sending with params:', templateParams);
+            
+            // First try with hardcoded values to test the connection
+            emailjs.send('service_p6blzez', 'template_w1w9e5n', templateParams)
+                .then(function(response) {
+                    console.log('SUCCESS!', response.status, response.text);
+                    showNotification('Message sent successfully!', 'success');
+                    e.target.reset();
+                }, function(error) {
+                    console.error('EmailJS Error:', {
+                        status: error.status,
+                        text: error.text,
+                        response: error.response
+                    });
+                    
+                    // Try with form data if hardcoded values fail
+                    if (error.status === 400) {
+                        console.log('Trying with form data directly...');
+                        return emailjs.sendForm('service_p6blzez', 'template_w1w9e5n', e.target);
+                    }
+                    throw error;
+                })
+                .then(function(secondResponse) {
+                    if (secondResponse) {
+                        console.log('Second attempt success!', secondResponse.status, secondResponse.text);
+                        showNotification('Message sent successfully!', 'success');
+                        e.target.reset();
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Final error:', error);
+                    showNotification(`Error: ${error.status || 'Unknown error'}. Please try again later.`, 'error');
+                })
+                .finally(() => {
+                    // Reset button state
+                    btn.disabled = false;
+                    btnText.textContent = 'Send Message';
+                    loader.style.display = 'none';
+                });
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                    notification.style.opacity = '1';
+                }, 500);
+            }, 5000);
+        }
+    </script>
+    
+    <!-- Scripts -->
     <script src="script.js"></script>
 </body>
 </html>
